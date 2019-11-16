@@ -1,16 +1,21 @@
 const ipsum = new LoremIpsum()
 const main = document.querySelector('main')
-let lastSectionAdded = null;
+let lastSectionCreated = undefined;
+let lastFixedSection = undefined;
 let zIndex = 999999998
 
 function createNewSection() {
   // Pin last session added to DOM
-  if (lastSectionAdded !== null) {
-    lastSectionAdded.classList.remove('floating')
-    lastSectionAdded.classList.add('fixed')
-    lastSectionAdded.classList.add('last-fixed')
-    if (lastSectionAdded.previousElementSibling) {
-      lastSectionAdded.previousElementSibling.classList.remove('last-fixed')
+  if (lastSectionCreated) {
+    lastSectionCreated.classList.remove('floating')
+    lastSectionCreated.classList.add('fixed')
+    lastSectionCreated.classList.add('last-fixed')
+
+    if (lastFixedSection) lastFixedSection.style.marginBottom = '0px'
+    lastFixedSection = lastSectionCreated
+
+    if (lastSectionCreated.previousElementSibling) {
+      lastSectionCreated.previousElementSibling.classList.remove('last-fixed')
     }
   }
 
@@ -31,10 +36,14 @@ function createNewSection() {
   newSection.classList.add('floating')
   newSection.style.zIndex = zIndex--
 
-  lastSectionAdded = newSection
+  lastSectionCreated = newSection
 
+  // Only add the new element after fade animation of last pinned element
   setTimeout(() => {
     main.append(newSection)
+    if (lastFixedSection) {
+      lastFixedSection.style.marginBottom = newSection.offsetHeight+'px'
+    }
   }, 300)
   // "300" Match the transition duration of section element
 }
@@ -43,7 +52,10 @@ createNewSection()
 createNewSection()
 
 window.addEventListener('scroll', (event) => {
-  if (window.scrollY >= document.body.offsetHeight) {
+  if (
+    lastFixedSection &&
+    window.scrollY >= (lastFixedSection.offsetTop + lastFixedSection.offsetHeight)
+  ) {
     createNewSection()
   }
 })
